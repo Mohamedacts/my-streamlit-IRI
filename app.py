@@ -1,3 +1,6 @@
+import streamlit as st
+import pandas as pd
+
 def process_file(file):
     results = []
     xls = pd.ExcelFile(file)
@@ -43,3 +46,24 @@ def process_file(file):
         stats['Sheet'] = sheet
         results.append(stats)
     return results
+
+# ---- Streamlit app interface ----
+
+st.title("Bulk Excel File Analyzer")
+
+uploaded_files = st.file_uploader("Upload Excel files", type="xlsx", accept_multiple_files=True)
+
+if uploaded_files:
+    all_results = []
+    for file in uploaded_files:
+        file_results = process_file(file)
+        for res in file_results:
+            res['Filename'] = file.name
+            all_results.append(res)
+    if all_results:
+        df_results = pd.DataFrame(all_results)
+        st.dataframe(df_results)
+    else:
+        st.info("No valid data found in uploaded files.")
+else:
+    st.info("Please upload one or more Excel files above.")
