@@ -34,4 +34,12 @@ def process_file(file):
                     'Lowest': df[col].min()
                 }
             else:
-                st.warning(f"'Left' and/or 'Right' colu
+                st.warning(f"'Left' and/or 'Right' columns not found in sheet {sheet}")
+                continue
+        else:
+            # Skip sheets that are not IRI or BBI
+            continue
+
+        stats['Sheet'] = sheet
+        results.append(stats)
+    return results
