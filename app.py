@@ -1,6 +1,20 @@
 import streamlit as st
 import pandas as pd
+from io import BytesIO
 
+# --- Your credit info ---
+def show_credit():
+    st.sidebar.markdown("""
+    ## About the Developer
+    **Mohamed Ali**  
+    Pavement Engineer  
+    📧 mehap201@gmail.com  
+    📞 +0966581764292  
+    [LinkedIn Profile](https://www.linkedin.com/in/mohameddalli)  
+    ---
+    """)
+
+# --- Excel processing functions ---
 def process_file(file):
     results = []
     xls = pd.ExcelFile(file)
@@ -47,21 +61,67 @@ def process_file(file):
         results.append(stats)
     return results
 
-st.title("Bulk Excel File Analyzer")
+# --- Function to convert DataFrame to Excel bytes for download ---
+def to_excel_bytes(df):
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Summary')
+    processed_data = output.getvalue()
+    return processed_data
 
-uploaded_files = st.file_uploader("Upload Excel files", type="xlsx", accept_multiple_files=True)
+# --- Streamlit UI ---
+def main():
+    st.set_page_config(page_title="Bulk Excel Analyzer", layout="wide")
 
-if uploaded_files:
-    all_results = []
-    for file in uploaded_files:
-        file_results = process_file(file)
-        for res in file_results:
-            res['Filename'] = file.name
-            all_results.append(res)
-    if all_results:
-        df_results = pd.DataFrame(all_results)
-        st.dataframe(df_results)
+    show_credit()
+
+    st.title("🚀 Bulk Excel File Analyzer")
+
+    st.markdown("""
+    Upload multiple Excel files with IRI and BBI sheets.  
+    The app calculates average, median, highest, and lowest values for each file and sheet.
+    """)
+
+    uploaded_files = st.file_uploader(
+        "Upload Excel files (.xlsx)", 
+        type="xlsx", 
+        accept_multiple_files=True,
+        help="You can upload up to 20 files at once."
+    )
+
+    if uploaded_files:
+        all_results = []
+        progress_bar = st.progress(0)
+        for i, file in enumerate(uploaded_files):
+            file_results = process_file(file)
+            for res in file_results:
+                res['Filename'] = file.name
+                all_results.append(res)
+            progress_bar.progress((i+1)/len(uploaded_files))
+        progress_bar.empty()
+
+        if all_results:
+            df_results = pd.DataFrame(all_results)
+            st.subheader("Summary Table")
+            st.dataframe(df_results.style.format({
+                'Average': '{:.3f}',
+                'Median': '{:.3f}',
+                'Highest': '{:.3f}',
+                'Lowest': '{:.3f}'
+            }))
+
+            # Export button
+            excel_bytes = to_excel_bytes(df_results)
+            st.download_button(
+                label="📥 Download Results as Excel",
+                data=excel_bytes,
+                file_name="bulk_analysis_results.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        else:
+            st.info("No valid data found in uploaded files.")
     else:
-        st.info("No valid data found in uploaded files.")
-else:
-    st.info("Please upload one or more Excel files.")
+        st.info("Please upload one or more Excel files to get started.")
+
+if __name__ == "__main__":
+    main()
