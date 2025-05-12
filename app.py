@@ -2,7 +2,14 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 
-# --- Sidebar with your photo and credits ---
+# 1. Set page config FIRST
+st.set_page_config(
+    page_title="BBI - IRI Analysis",
+    page_icon="📊",
+    layout="wide"
+)
+
+# 2. Sidebar with your photo and credits
 st.sidebar.image("mohamed_ali.jpg", width=180, caption="Mohamed Ali")
 st.sidebar.markdown("""
 ### Mohamed Ali  
@@ -13,24 +20,21 @@ st.sidebar.markdown("""
 ---
 """)
 
-st.set_page_config(
-    page_title="BBI - IRI Analysis",
-    page_icon="📊",
-    layout="wide"
-)
-
+# 3. Main title and instructions
 st.title("BBI - IRI Analysis")
 st.markdown("""
 Upload your Excel files containing IRI and BBI data.  
 The app will process each file and sheet, and provide summary statistics.
 """)
 
+# 4. File uploader
 uploaded_files = st.file_uploader(
     "Upload Excel files (.xlsx)", 
     type="xlsx", 
     accept_multiple_files=True
 )
 
+# 5. Processing function
 def process_file(file):
     results = []
     xls = pd.ExcelFile(file)
@@ -77,12 +81,14 @@ def process_file(file):
         results.append(stats)
     return results
 
+# 6. Excel export helper
 def to_excel_bytes(df):
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False)
     return output.getvalue()
 
+# 7. Main app logic
 if uploaded_files:
     all_results = []
     for file in uploaded_files:
